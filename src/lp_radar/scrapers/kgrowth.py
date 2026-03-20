@@ -1,0 +1,62 @@
+"""한국성장금융 (KGrowth) scraper."""
+from __future__ import annotations
+
+from playwright.async_api import Page
+
+from lp_radar.base_scraper import BaseScraper
+from lp_radar.models import Announcement
+from lp_radar.registry import register
+from lp_radar.utils import make_absolute_url, parse_korean_date
+
+
+@register
+class KgrowthScraper(BaseScraper):
+    name = "한국성장금융"
+    short_name = "KGROWTH"
+    base_url = "https://m.kgrowth.or.kr/notice.asp"
+
+    async def wait_for_content(self, page: Page) -> None:
+        await page.wait_for_selector("table, .board_list, .list_wrap, ul.list", timeout=15_000)
+
+    async def extract_announcements(self, page: Page) -> list[Announcement]:
+        results: list[Announcement] = []
+
+        # Try table-based listing
+        rows = await page.query_selector_all("table tbody tr")
+        if not rows:
+            # Mobile site may use list/div-based layout
+            rows = await page.query_selector_all(".board_list li, .list_wrap li, .notice_list li")
+
+        for row in rows:
+            try:
+                link = await row.query_selector("a")
+                if not link:
+                    continue
+
+                title = (await link.inner_text()).strip()
+                if not title:
+                    continue
+
+                href = await link.get_attribute("href")
+                url = make_absolute_url(self.base_url, href) if href else self.base_url
+
+                date = None
+                # Try finding date in spans or specific elements
+                date_el = await row.query_selector(".date, .datetime, span.date")
+                if date_el:
+                    date = parse_korean_date((await date_el.inner_text()).strip())
+
+                if not date:
+                    tds = await row.query_selector_all("td, span")
+                    for td in tds:
+                        text = (await td.inner_text()).strip()
+                        parsed = parse_korean_date(text)
+                        if parsed:
+                            date = parsed
+                            break
+
+                results.append(self.make_announcement(title, date, url))
+            except Exception:
+                continue
+
+        return results
