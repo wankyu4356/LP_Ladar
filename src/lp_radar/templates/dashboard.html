@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LP Radar - 기관전용 사모펀드 출자 공고 모니터</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 24px; font-weight: 700; }
+        .header h1 span { color: #e94560; }
+        .header-sub { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+
+        /* Controls */
+        .controls {
+            background: white;
+            padding: 20px 32px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .control-group { display: flex; align-items: center; gap: 8px; }
+        .control-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+        }
+        .control-group input, .control-group select {
+            padding: 8px 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .control-group input[type="number"] { width: 80px; }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #e94560;
+            color: white;
+        }
+        .btn-primary:hover { background: #c73e54; }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #16213e;
+            color: white;
+        }
+        .btn-secondary:hover { background: #1a1a2e; }
+        .btn-secondary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-outline {
+            background: white;
+            color: #16213e;
+            border: 1px solid #16213e;
+        }
+        .btn-outline:hover { background: #f5f5f5; }
+
+        /* Main content */
+        .main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .stat-card .label { font-size: 12px; color: #888; font-weight: 600; text-transform: uppercase; }
+        .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+        .stat-card .value.red { color: #e94560; }
+        .stat-card .value.green { color: #2ecc71; }
+        .stat-card .value.blue { color: #3498db; }
+        .stat-card .value.orange { color: #e67e22; }
+
+        /* Progress */
+        .progress-bar {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .progress-bar.active { display: block; }
+        .progress-bar h3 { font-size: 14px; margin-bottom: 12px; }
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #3498db);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        .progress-log {
+            margin-top: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .table-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .table-header h2 { font-size: 16px; }
+        .table-filter {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .table-filter input {
+            padding: 6px 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            font-size: 13px;
+            width: 240px;
+        }
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            background: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: #e94560;
+            color: white;
+            border-color: #e94560;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        th:hover { background: #eee; }
+        th .sort-icon { margin-left: 4px; opacity: 0.3; }
+        th.sorted .sort-icon { opacity: 1; }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+        tr:hover { background: #f8f9fb; }
+        tr.fund-related { background: #fffde7; }
+        tr.fund-related:hover { background: #fff9c4; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-fund { background: #fff3cd; color: #856404; }
+        .badge-normal { background: #e8f5e9; color: #2e7d32; }
+
+        .source-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #e8eaf6;
+            color: #283593;
+        }
+
+        .title-link {
+            color: #1a1a2e;
+            text-decoration: none;
+        }
+        .title-link:hover {
+            color: #e94560;
+            text-decoration: underline;
+        }
+
+        /* Errors */
+        .errors-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .errors-section .table-header { background: #fff5f5; }
+        .error-row { background: #fff5f5; }
+        .error-row:hover { background: #ffe8e8; }
+        .screenshot-link { color: #3498db; text-decoration: none; font-size: 12px; }
+        .screenshot-link:hover { text-decoration: underline; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: #555; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header { padding: 16px; }
+            .controls { padding: 16px; flex-direction: column; align-items: stretch; }
+            .main { padding: 16px; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 12px; }
+            td, th { padding: 8px; }
+            .table-filter input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>LP <span>Radar</span></h1>
+            <div class="header-sub">기관전용 사모펀드 출자 공고 모니터링</div>
+        </div>
+        <div id="lastUpdate" style="font-size: 13px; opacity: 0.7;"></div>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>조회 기간</label>
+            <input type="number" id="daysInput" value="10" min="1" max="365">
+            <span style="font-size: 13px; color: #888;">일</span>
+        </div>
+        <div class="control-group">
+            <label>동시 실행</label>
+            <input type="number" id="concurrencyInput" value="4" min="1" max="10">
+            <span style="font-size: 13px; color: #888;">탭</span>
+        </div>
+        <button class="btn btn-primary" id="runBtn" onclick="runScraper()">
+            스크래핑 시작
+        </button>
+        <button class="btn btn-secondary" id="downloadBtn" onclick="downloadExcel()" disabled>
+            Excel 다운로드
+        </button>
+        <button class="btn btn-outline" onclick="loadLastResults()">
+            마지막 결과 불러오기
+        </button>
+    </div>
+
+    <div class="main">
+        <!-- Progress -->
+        <div class="progress-bar" id="progressBar">
+            <h3 id="progressTitle">스크래핑 진행 중...</h3>
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-log" id="progressLog"></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats" id="statsSection" style="display: none;">
+            <div class="stat-card">
+                <div class="label">총 공고 수</div>
+                <div class="value blue" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">펀드 관련</div>
+                <div class="value red" id="statFund">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">스캔 사이트</div>
+                <div class="value green" id="statSites">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">에러 사이트</div>
+                <div class="value orange" id="statErrors">0</div>
+            </div>
+        </div>
+
+        <!-- Results table -->
+        <div class="table-container" id="resultsSection" style="display: none;">
+            <div class="table-header">
+                <h2>공고 목록</h2>
+                <div class="table-filter">
+                    <input type="text" id="searchInput" placeholder="제목, 기관명 검색..." oninput="filterTable()">
+                    <button class="filter-btn" id="fundFilterBtn" onclick="toggleFundFilter()">펀드 관련만</button>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(0)">기관 <span class="sort-icon">&#x25B2;&#x25BC;</span></th>
+                            <th onclick="sortTable(1)">날짜 <span class="sort-icon">&#x25B2;&#x25BC;</span></th>
+                            <th onclick="sortTable(2)">제목 <span class="sort-icon">&#x25B2;&#x25BC;</span></th>
+                            <th>구분</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="icon">&#x1F50D;</div>
+                <h3>검색 결과 없음</h3>
+                <p>필터 조건을 변경해보세요</p>
+            </div>
+        </div>
+
+        <!-- Errors section -->
+        <div class="errors-section" id="errorsSection" style="display: none;">
+            <div class="table-header">
+                <h2>스크래핑 실패 사이트</h2>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>기관명</th>
+                        <th>에러</th>
+                        <th>스크린샷</th>
+                    </tr>
+                </thead>
+                <tbody id="errorsBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Initial empty state -->
+        <div class="empty-state" id="initialEmpty">
+            <div class="icon">&#x1F4E1;</div>
+            <h3>스크래핑을 시작하세요</h3>
+            <p>상단의 "스크래핑 시작" 버튼을 클릭하면 20개 기관 사이트에서 공고를 수집합니다</p>
+        </div>
+    </div>
+
+    <script>
+        let allResults = [];
+        let fundFilterActive = false;
+        let sortCol = 1;
+        let sortAsc = false;
+        let pollInterval = null;
+
+        function runScraper() {
+            const days = document.getElementById('daysInput').value;
+            const concurrency = document.getElementById('concurrencyInput').value;
+            const runBtn = document.getElementById('runBtn');
+            const progressBar = document.getElementById('progressBar');
+
+            runBtn.disabled = true;
+            runBtn.textContent = '실행 중...';
+            progressBar.classList.add('active');
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressLog').innerHTML = '';
+            document.getElementById('progressTitle').textContent = '스크래핑 진행 중...';
+            document.getElementById('initialEmpty').style.display = 'none';
+
+            fetch('/api/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ days: parseInt(days), concurrency: parseInt(concurrency) })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'started') {
+                    pollProgress();
+                }
+            })
+            .catch(err => {
+                runBtn.disabled = false;
+                runBtn.textContent = '스크래핑 시작';
+                addLog('오류: ' + err.message);
+            });
+        }
+
+        function pollProgress() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(() => {
+                fetch('/api/status')
+                    .then(r => r.json())
+                    .then(data => {
+                        updateProgress(data);
+                        if (data.status === 'completed' || data.status === 'idle') {
+                            clearInterval(pollInterval);
+                            pollInterval = null;
+                            if (data.status === 'completed') {
+                                loadResults();
+                            }
+                        }
+                    });
+            }, 1000);
+        }
+
+        function updateProgress(data) {
+            const fill = document.getElementById('progressFill');
+            const log = document.getElementById('progressLog');
+            const title = document.getElementById('progressTitle');
+
+            if (data.progress !== undefined) {
+                fill.style.width = data.progress + '%';
+            }
+
+            if (data.logs && data.logs.length > 0) {
+                log.innerHTML = data.logs.map(l => '<div>' + escapeHtml(l) + '</div>').join('');
+                log.scrollTop = log.scrollHeight;
+            }
+
+            if (data.status === 'completed') {
+                title.textContent = '스크래핑 완료!';
+                fill.style.width = '100%';
+                document.getElementById('runBtn').disabled = false;
+                document.getElementById('runBtn').textContent = '스크래핑 시작';
+            }
+        }
+
+        function loadResults() {
+            fetch('/api/results')
+                .then(r => r.json())
+                .then(data => {
+                    allResults = data.announcements || [];
+                    renderResults();
+                    renderErrors(data.errors || []);
+                    updateStats(data);
+                    document.getElementById('downloadBtn').disabled = !data.excel_path;
+                    document.getElementById('progressBar').classList.remove('active');
+                    document.getElementById('lastUpdate').textContent = '마지막 업데이트: ' + (data.timestamp || 'N/A');
+                });
+        }
+
+        function loadLastResults() {
+            document.getElementById('initialEmpty').style.display = 'none';
+            loadResults();
+        }
+
+        function updateStats(data) {
+            const section = document.getElementById('statsSection');
+            section.style.display = 'grid';
+            document.getElementById('statTotal').textContent = (data.announcements || []).length;
+            document.getElementById('statFund').textContent = (data.announcements || []).filter(a => a.is_fund_related).length;
+            document.getElementById('statSites').textContent = data.total_sites || 0;
+            document.getElementById('statErrors').textContent = (data.errors || []).length;
+        }
+
+        function renderResults() {
+            const body = document.getElementById('resultsBody');
+            const section = document.getElementById('resultsSection');
+            const empty = document.getElementById('emptyState');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = allResults;
+
+            if (search) {
+                filtered = filtered.filter(a =>
+                    a.title.toLowerCase().includes(search) ||
+                    a.source.toLowerCase().includes(search) ||
+                    a.source_short.toLowerCase().includes(search)
+                );
+            }
+
+            if (fundFilterActive) {
+                filtered = filtered.filter(a => a.is_fund_related);
+            }
+
+            // Sort
+            filtered.sort((a, b) => {
+                let va, vb;
+                if (sortCol === 0) { va = a.source; vb = b.source; }
+                else if (sortCol === 1) { va = a.date || ''; vb = b.date || ''; }
+                else if (sortCol === 2) { va = a.title; vb = b.title; }
+                else { va = a.is_fund_related ? 1 : 0; vb = b.is_fund_related ? 1 : 0; }
+                if (va < vb) return sortAsc ? -1 : 1;
+                if (va > vb) return sortAsc ? 1 : -1;
+                return 0;
+            });
+
+            section.style.display = 'block';
+
+            if (filtered.length === 0) {
+                body.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+
+            body.innerHTML = filtered.map(a => `
+                <tr class="${a.is_fund_related ? 'fund-related' : ''}">
+                    <td><span class="source-tag">${escapeHtml(a.source_short)}</span></td>
+                    <td style="white-space:nowrap;">${a.date || '-'}</td>
+                    <td><a class="title-link" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a></td>
+                    <td>${a.is_fund_related
+                        ? '<span class="badge badge-fund">펀드관련</span>'
+                        : '<span class="badge badge-normal">일반</span>'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderErrors(errors) {
+            const section = document.getElementById('errorsSection');
+            const body = document.getElementById('errorsBody');
+
+            if (!errors || errors.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            body.innerHTML = errors.map(e => `
+                <tr class="error-row">
+                    <td><span class="source-tag">${escapeHtml(e.source_short)}</span> ${escapeHtml(e.source)}</td>
+                    <td style="font-size:12px; color:#c0392b;">${escapeHtml(e.error_message.substring(0, 120))}...</td>
+                    <td>${e.screenshot_path
+                        ? `<a class="screenshot-link" href="/api/screenshot/${encodeURIComponent(e.screenshot_path)}" target="_blank">보기</a>`
+                        : '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterTable() { renderResults(); }
+
+        function toggleFundFilter() {
+            fundFilterActive = !fundFilterActive;
+            document.getElementById('fundFilterBtn').classList.toggle('active', fundFilterActive);
+            renderResults();
+        }
+
+        function sortTable(col) {
+            if (sortCol === col) { sortAsc = !sortAsc; }
+            else { sortCol = col; sortAsc = true; }
+            renderResults();
+        }
+
+        function downloadExcel() {
+            window.location.href = '/api/download';
+        }
+
+        function addLog(msg) {
+            const log = document.getElementById('progressLog');
+            log.innerHTML += '<div>' + escapeHtml(msg) + '</div>';
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Auto-load last results on page load
+        fetch('/api/status').then(r => r.json()).then(data => {
+            if (data.status === 'running') {
+                document.getElementById('initialEmpty').style.display = 'none';
+                document.getElementById('progressBar').classList.add('active');
+                document.getElementById('runBtn').disabled = true;
+                document.getElementById('runBtn').textContent = '실행 중...';
+                pollProgress();
+            } else if (data.has_results) {
+                document.getElementById('initialEmpty').style.display = 'none';
+                loadResults();
+            }
+        });
+    </script>
+</body>
+</html>
