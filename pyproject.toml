@@ -10,10 +10,12 @@ requires-python = ">=3.10"
 dependencies = [
     "playwright>=1.40",
     "openpyxl>=3.1",
+    "flask>=3.0",
 ]
 
 [project.scripts]
 lp-radar = "lp_radar.main:main"
+lp-radar-web = "lp_radar.web:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
